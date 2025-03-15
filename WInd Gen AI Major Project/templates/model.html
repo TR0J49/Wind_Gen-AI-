@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model - Wind Energy Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('static/turbine.webp'); /* Background image */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed; /* Fix the background image */
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Header Container */
+        header {
+            position: fixed; /* Fixed header */
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black background */
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); /* Add a shadow for depth */
+            z-index: 1000; /* Ensure header is above other content */
+        }
+
+        /* Company Logo and Name */
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            width: 50px; /* Adjust logo size */
+            height: 50px;
+            margin-right: 10px;
+            border-radius: 50%; /* Make the logo circular */
+            object-fit: cover; /* Ensure the image fits within the circle */
+        }
+
+        .company-name {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Navigation Links */
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        nav a:hover {
+            color: #00ddff; /* Highlight color on hover */
+        }
+
+        /* Authentication Buttons */
+        .auth-buttons {
+            display: flex;
+            align-items: center;
+        }
+
+        .auth-buttons a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .auth-buttons a.login {
+            background-color: #0072ff; /* Blue background for Login */
+        }
+
+        .auth-buttons a.signup {
+            background-color: #00c6ff; /* Light blue background for Sign Up */
+        }
+
+        .auth-buttons a.logout {
+            background-color: #ff4d4d; /* Red background for Logout */
+        }
+
+        .auth-buttons a:hover {
+            opacity: 0.8; /* Slight fade on hover */
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 800px;
+            padding: 20px;
+            text-align: center;
+            background: rgba(61, 62, 62, 0.6); /* Semi-transparent background */
+            border-radius: 15px;
+            margin: 20px;
+            box-shadow: 0 4px 15px rgba(246, 243, 243, 0.3);
+            margin-top: 120px; /* Adjusted for fixed header */
+        }
+
+        .container h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #ff0202, #3900f4); /* Gradient for heading */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent; /* Fallback for non-WebKit browsers */
+            animation: fadeIn 2s ease-in-out, slideInDown 1.5s ease-in-out; /* Combined animations */
+        }
+
+        .container p {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            animation: fadeIn 2.5s ease-in-out; /* Fade-in animation */
+        }
+
+        .container label {
+            display: block;
+            font-size: 18px;
+            margin: 15px 0 5px;
+            animation: slideInLeft 1.5s ease-in-out; /* Slide-in animation */
+        }
+
+        .container input {
+            width: 90%;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.9); /* Light background for input */
+            color: #333; /* Dark text color */
+            animation: slideInRight 1.5s ease-in-out; /* Slide-in animation */
+        }
+
+        .container input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 1); /* Brighter background on focus */
+        }
+
+        .container button {
+            background: linear-gradient(45deg, #1e00ff, #ff0000); /* Gradient for button */
+            color: rgb(244, 244, 244);
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.3s ease, background 0.3s ease;
+            animation: bounce 2s infinite; /* Bounce animation */
+        }
+
+        .container button:hover {
+            background: linear-gradient(45deg, #0072ff, #00c6ff); /* Gradient hover effect */
+            transform: scale(1.05);
+        }
+
+        .prediction-result {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            animation: fadeIn 1s ease-in-out; /* Fade-in animation */
+        }
+
+        .loading-spinner {
+            display: none;
+            margin-top: 20px;
+            font-size: 20px;
+            animation: fadeIn 1s ease-in-out; /* Fade-in animation */
+        }
+
+        /* Chatbot Icon */
+        .chatbot-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #0072ff;
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 2s ease-in-out; /* Fade-in animation */
+        }
+
+        .chatbot-icon:hover {
+            background-color: #00c6ff;
+        }
+
+        .chatbot-message {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            background-color: #0072ff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInDown {
+            0% {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInLeft {
+            0% {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInRight {
+            0% {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-20px);
+            }
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with Logo, Company Name, and Navigation -->
+    <header>
+        <div class="logo-container">
+            <img src="static/WhatsApp Image 2025-03-12 at 22.10.28_1c3098cb.jpg" alt="Company Logo" class="logo"> <!-- Add your logo file -->
+            <span class="company-name">WindGen AI</span> <!-- Replace with your company name -->
+        </div>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/model">Model</a>
+            <a href="/dashboard">Dashboard</a>
+        </nav>
+        <!-- Authentication Buttons -->
+        <div class="auth-buttons">
+            {% if 'user_id' in session %}
+                <!-- Show Logout button if user is logged in -->
+                <a href="/logout" class="logout">Logout</a>
+            {% else %}
+                <!-- Show Login and Signup buttons if user is not logged in -->
+                <a href="/login" class="login">Login</a>
+                <a href="/signup" class="signup">Sign Up</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <h1>Wind Energy Prediction Model</h1>
+        <p>Enter the required details to predict the LV ActivePower (kW) generated by wind energy.</p>
+        <form id="predictionForm" action="/model" method="POST">
+            <label for="date_time">Date/Time (YYYY-MM-DD HH:MM:SS):</label>
+            <input type="text" id="date_time" name="date_time" required placeholder="e.g., 2023-10-15 14:30:00">
+
+            <label for="wind_speed">Wind Speed (m/s):</label>
+            <input type="number" step="0.1" id="wind_speed" name="wind_speed" required placeholder="e.g., 12.5">
+
+            <label for="wind_direction">Wind Direction (°):</label>
+            <input type="number" step="0.1" id="wind_direction" name="wind_direction" required placeholder="e.g., 45.0">
+
+            <button type="submit">Predict</button>
+        </form>
+
+        <div class="loading-spinner" id="loadingSpinner">Loading...</div>
+
+        {% if prediction_text %}
+        <div class="prediction-result">
+            {{ prediction_text }}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Chatbot Icon -->
+    <div class="chatbot-icon" onclick="showChatbotMessage()">💬</div>
+    <div class="chatbot-message" id="chatbotMessage">How can I help you?</div>
+
+    <script>
+        // Show loading spinner on form submission
+        document.getElementById('predictionForm').addEventListener('submit', function() {
+            document.getElementById('loadingSpinner').style.display = 'block';
+        });
+
+        // Show chatbot message
+        function showChatbotMessage() {
+            const chatbotMessage = document.getElementById('chatbotMessage');
+            chatbotMessage.style.display = 'block';
+            setTimeout(() => {
+                chatbotMessage.style.display = 'none';
+            }, 3000); // Hide message after 3 seconds
+        }
+    </script>
+</body>
+</html>

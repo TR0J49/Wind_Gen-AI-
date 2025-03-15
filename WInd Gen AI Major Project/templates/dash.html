@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wind Turbine Dashboard</title>
+    <!-- Include Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('static/bg.avif'); /* Replace with your image URL */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #333;
+        }
+
+        /* Overlay to make text readable */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            
+            z-index: -1;
+        }
+
+        /* Header Container */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black background */
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); /* Add a shadow for depth */
+            z-index: 1000;
+        }
+
+        /* Company Logo and Name */
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            width: 50px; /* Adjust logo size */
+            height: 50px;
+            margin-right: 10px;
+            border-radius: 50%; /* Make the logo circular */
+            object-fit: cover; /* Ensure the image fits within the circle */
+        }
+
+        .company-name {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Navigation Links */
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        nav a:hover {
+            color: #00ddff; /* Highlight color on hover */
+        }
+
+        /* Login, Sign Up, and Logout Buttons */
+        .auth-buttons {
+            display: flex;
+            align-items: center;
+        }
+
+        .auth-buttons a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .auth-buttons a.login {
+            background-color: #0d15fb; /* Blue background for Login */
+        }
+
+        .auth-buttons a.signup {
+            background-color: #0d15fb; /* Light blue background for Sign Up */
+        }
+
+        .auth-buttons a.logout {
+            background-color: #ff4d4d; /* Red background for Logout */
+        }
+
+        .auth-buttons a:hover {
+            opacity: 0.8; /* Slight fade on hover */
+        }
+
+        /* Main Content */
+        .dashboard {
+            height: auto;
+            max-width: 3000px;
+            margin: 0 auto;
+            padding: 50px;
+            position: relative;
+            z-index: 1;
+            margin-top: 80px; /* Add margin to avoid overlap with the fixed header */
+        }
+
+        h1 {
+            text-align: center;
+            margin: 1px 0;
+            font-size: 2.9rem;
+            color: #000000; /* Dark black */
+        }
+
+        /* Dropdown Styles */
+        .dropdown {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .dropdown label {
+            font-size: 1.20rem;
+            font-weight: bold;
+            margin-right: 30px;
+            color: #000000; /* Dark black */
+        }
+
+        .dropdown select {
+            padding: 8px 12px;
+            font-size: 1rem;
+            border: 1px solid #000000;
+            border-radius: 10px;
+            background-color: #fff;
+            cursor: pointer;
+        }
+
+        /* Chart Grid Layout */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            width: 100%;
+        }
+
+        .plot {
+            background-color: transparent; /* Transparent background */
+            border: 1px solid #000000;
+            border-radius: 1px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            padding: 5px;
+        }
+
+        .plot:hover {
+            box-shadow: 0 10px 120px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with Logo, Company Name, and Navigation -->
+    <header>
+        <div class="logo-container">
+            <img src="static/WhatsApp Image 2025-03-12 at 22.10.28_1c3098cb.jpg" alt="Company Logo" class="logo"> <!-- Add your logo file -->
+            <span class="company-name">WindGen AI</span> <!-- Replace with your company name -->
+        </div>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/about">About</a>
+            <a href="/model">Model</a>
+            <a href="/dashboard">Dashboard</a>
+        </nav>
+        
+        <!-- Login, Sign Up, and Logout Buttons -->
+        <div class="auth-buttons">
+            {% if 'user_id' in session %}
+                <!-- Show Logout button if user is logged in -->
+                <a href="/logout" class="logout">Logout</a>
+            {% else %}
+                <!-- Show Login and Signup buttons if user is not logged in -->
+                <a href="/login" class="login">Login</a>
+                <a href="/signup" class="signup">Sign Up</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard">
+        <h1>Wind Turbine Dashboard</h1>
+        <div class="dropdown">
+            <label for="date-dropdown">Select Date:</label>
+            <select id="date-dropdown">
+                {% for date in unique_dates %}
+                    <option value="{{ date }}">{{ date }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="chart-grid">
+            <div id="plot1" class="plot"></div>
+            <div id="plot2" class="plot"></div>
+            <div id="plot3" class="plot"></div>
+            <div id="plot4" class="plot"></div>
+        </div>
+    </div>
+
+    <script>
+        // Function to update all plots based on selected date
+        function updatePlots(selectedDate) {
+            fetch(`/data/${selectedDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Clear previous plots
+                    document.getElementById("plot1").innerHTML = "";
+                    document.getElementById("plot2").innerHTML = "";
+                    document.getElementById("plot3").innerHTML = "";
+                    document.getElementById("plot4").innerHTML = "";
+
+                    // Plot 1: Time Series of Power Output
+                    Plotly.newPlot("plot1", [{
+                        x: data.map(d => d['Date/Time']),
+                        y: data.map(d => d['LV ActivePower (kW)']),
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: '#e74c3c', width: 2 },
+                        name: 'LV ActivePower (kW)'
+                    }], {
+                        title: 'Power Output Over Time',
+                        xaxis: { 
+                            title: 'Time',
+                            color: '#000000', // Dark black
+                            showgrid: false, // Remove grid
+                            tickfont: { color: '#000000' } // Dark black
+                        },
+                        yaxis: { 
+                            title: 'Power Output (kW)',
+                            color: '#000000', // Dark black
+                            showgrid: false, // Remove grid
+                            tickfont: { color: '#000000' } // Dark black
+                        },
+                        showlegend: true,
+                        plot_bgcolor: 'rgba(0, 0, 0, 0)', // Transparent background
+                        paper_bgcolor: 'rgba(0, 0, 0, 0)', // Transparent background
+                        font: { color: '#000000' } // Dark black text
+                    });
+
+                    // Plot 2: Scatter Plot of Wind Speed vs. Power Output
+                    Plotly.newPlot("plot2", [{
+                        x: data.map(d => d['Wind Speed (m/s)']),
+                        y: data.map(d => d['LV ActivePower (kW)']),
+                        type: 'scatter',
+                        mode: 'markers',
+                        marker: { color: '#3498db', opacity: 0.7 },
+                        name: 'Wind Speed vs. Power Output'
+                    }], {
+                        title: 'Wind Speed vs. Power Output',
+                        xaxis: { 
+                            title: 'Wind Speed (m/s)',
+                            color: '#000000', // Dark black
+                            showgrid: false, // Remove grid
+                            tickfont: { color: '#000000' } // Dark black
+                        },
+                        yaxis: { 
+                            title: 'Power Output (kW)',
+                            color: '#000000', // Dark black
+                            showgrid: false, // Remove grid
+                            tickfont: { color: '#000000' } // Dark black
+                        },
+                        showlegend: true,
+                        plot_bgcolor: 'rgba(0, 0, 0, 0)', // Transparent background
+                        paper_bgcolor: 'rgba(0, 0, 0, 0)', // Transparent background
+                        font: { color: '#000000' } // Dark black text
+                    });
+
+                    // Plot 3: Theoretical vs. Actual Power
+                    Plotly.newPlot("plot3", [{
+                        x: data.map(d => d['Date/Time']),
+                        y: data.map(d => d['Theoretical_Power_Curve (KWh)']),
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: '#e67e22', width: 2 },
+                        name: 'Theoretical Power'
+                    }, {
+                        x: data.map(d => d['Date/Time']),
+                        y: data.map(d => d['LV ActivePower (kW)']),
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: '#2980b9', width: 2 },
+                        name: 'Actual Power'
+                    }], {
+                        title: 'Theoretical vs. Actual Power',
+                        xaxis: { 
+                            title: 'Time',
+                            color: '#000000', // Dark black
+                            showgrid: false, // Remove grid
+                            tickfont: { color: '#000000' } // Dark black
+                        },
+                        yaxis: { 
+                            title: 'Power (kW/KWh)',
+                            color: '#000000', // Dark black
+                            showgrid: false, // Remove grid
+                            tickfont: { color: '#000000' } // Dark black
+                        },
+                        showlegend: true,
+                        plot_bgcolor: 'rgba(0, 0, 0, 0)', // Transparent background
+                        paper_bgcolor: 'rgba(0, 0, 0, 0)', // Transparent background
+                        font: { color: '#000000' } // Dark black text
+                    });
+
+                    // Plot 4: Polar Plot of Wind Direction vs. Power Output
+                    Plotly.newPlot("plot4", [{
+                        r: data.map(d => d['LV ActivePower (kW)']),
+                        theta: data.map(d => d['Wind Direction (°)'] * (Math.PI / 180)), // Convert to radians
+                        type: 'scatterpolar',
+                        mode: 'markers',
+                        marker: { color: '#2ecc71', opacity: 0.7 },
+                        name: 'Wind Direction vs. Power Output'
+                    }], {
+                        title: 'Wind Direction vs. Power Output',
+                        polar: {
+                            radialaxis: { 
+                                title: 'Power Output (kW)',
+                                color: '#000000', // Dark black
+                                tickfont: { color: '#000000' } // Dark black
+                            },
+                            angularaxis: { 
+                                direction: 'clockwise', 
+                                thetaunit: 'radians',
+                                color: '#000000', // Dark black
+                                tickfont: { color: '#000000' } // Dark black
+                            }
+                        },
+                        showlegend: true,
+                        plot_bgcolor: 'rgba(0, 0, 0, 0)', // Transparent background
+                        paper_bgcolor: 'rgba(0, 0, 0, 0)', // Transparent background
+                        font: { color: '#000000' } // Dark black text
+                    });
+                });
+        }
+
+        // Link the dropdown to the update function
+        document.getElementById("date-dropdown").addEventListener("change", function() {
+            const selectedDate = this.value;
+            updatePlots(selectedDate);
+        });
+
+        // Initialize with the first date
+        const initialDate = document.getElementById("date-dropdown").value;
+        updatePlots(initialDate);
+    </script>
+</body>
+</html>
